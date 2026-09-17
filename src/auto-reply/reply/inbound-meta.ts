@@ -558,6 +558,32 @@ function resolveInboundFormattingHints(
   });
 }
 
+/** Builds the trusted structured sender identity block for inbound metadata.
+ * Returns undefined unless the provenance carries at least a name or user id. */
+function buildLogicOsUser(provenance: TemplateContext["InputProvenance"]):
+  | {
+      name?: string;
+      role?: string;
+      userId?: string;
+      kind?: string;
+    }
+  | undefined {
+  if (!provenance) {
+    return undefined;
+  }
+  const name = normalizePromptMetadataString(provenance.senderName);
+  const userId = normalizePromptMetadataString(provenance.senderUserId);
+  if (!name && !userId) {
+    return undefined;
+  }
+  return {
+    name,
+    role: normalizePromptMetadataString(provenance.senderRole),
+    userId,
+    kind: provenance.kind,
+  };
+}
+
 /** Builds trusted system metadata for the inbound channel and formatting hints. */
 export function buildInboundMetaSystemPrompt(
   ctx: TemplateContext,
@@ -585,6 +611,9 @@ export function buildInboundMetaSystemPrompt(
     provider: normalizePromptMetadataString(ctx.Provider),
     surface: normalizePromptMetadataString(ctx.Surface),
     chat_type: chatType ?? (isDirect ? "direct" : undefined),
+    // Structured sender identity from system-attached input provenance
+    // (admin-scope gated on chat.send — trusted, not attacker-controlled).
+    logic_os_user: buildLogicOsUser(ctx.InputProvenance),
     // Authoring hints follow the reply delivery channel, not the inbound event:
     // system-event turns (heartbeat/cron) carry the persisted channel/account in
     // formattingHintsCtx while ctx still identifies the system provider.

@@ -3,9 +3,59 @@ import { describe, expect, it } from "vitest";
 import {
   annotateInterSessionPromptText,
   isAgentMediatedCompletionSourceTool,
+  normalizeInputProvenance,
   shouldPreserveUserFacingSessionStateForInputProvenance,
   stripInterSessionPromptPrefixForDisplay,
 } from "./input-provenance.js";
+
+describe("normalizeInputProvenance", () => {
+  it("preserves optional structured sender identity fields", () => {
+    const provenance = normalizeInputProvenance({
+      kind: "external_user",
+      sourceChannel: "logicos-dashboard",
+      senderName: "Fredrik",
+      senderRole: "admin",
+      senderUserId: "2786e238-0000-0000-0000-000000000000",
+      senderSessionKey: "agent:main:main",
+    });
+
+    expect(provenance).toEqual({
+      kind: "external_user",
+      originSessionId: undefined,
+      sourceSessionKey: undefined,
+      sourceChannel: "logicos-dashboard",
+      sourceTool: undefined,
+      senderName: "Fredrik",
+      senderRole: "admin",
+      senderUserId: "2786e238-0000-0000-0000-000000000000",
+      senderSessionKey: "agent:main:main",
+    });
+  });
+
+  it("normalizes blank sender identity fields away", () => {
+    const provenance = normalizeInputProvenance({
+      kind: "external_user",
+      senderName: "   ",
+      senderUserId: 42,
+    });
+
+    expect(provenance?.senderName).toBeUndefined();
+    expect(provenance?.senderUserId).toBeUndefined();
+  });
+
+  it("keeps legacy provenance without sender fields working", () => {
+    const provenance = normalizeInputProvenance({
+      kind: "inter_session",
+      sourceSessionKey: "agent:main:discord:source",
+      sourceTool: "sessions_send",
+    });
+
+    expect(provenance?.kind).toBe("inter_session");
+    expect(provenance?.senderName).toBeUndefined();
+    expect(provenance?.senderRole).toBeUndefined();
+    expect(provenance?.senderUserId).toBeUndefined();
+  });
+});
 
 describe("annotateInterSessionPromptText", () => {
   it("marks inter-session prompt text as non-user-authored", () => {

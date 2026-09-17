@@ -171,6 +171,86 @@ describe("buildInboundMetaSystemPrompt", () => {
     expect(payload["channel"]).toBe("telegram");
   });
 
+  it("renders structured LogicOS sender identity as logic_os_user", () => {
+    const prompt = buildInboundMetaSystemPrompt(
+      {
+        Provider: "webchat",
+        Surface: "webchat",
+        ChatType: "direct",
+        InputProvenance: {
+          kind: "external_user",
+          sourceChannel: "logicos-dashboard",
+          senderName: "Fredrik",
+          senderRole: "admin",
+          senderUserId: "2786e238-0000-0000-0000-000000000000",
+        },
+      } as TemplateContext,
+      EMPTY_CFG,
+    );
+
+    const payload = parseInboundMetaPayload(prompt);
+    expect(payload["schema"]).toBe("openclaw.inbound_meta.v2");
+    expect(payload["logic_os_user"]).toEqual({
+      name: "Fredrik",
+      role: "admin",
+      userId: "2786e238-0000-0000-0000-000000000000",
+      kind: "external_user",
+    });
+  });
+
+  it("renders logic_os_user with only the fields present (userId-only)", () => {
+    const prompt = buildInboundMetaSystemPrompt(
+      {
+        Provider: "webchat",
+        Surface: "webchat",
+        ChatType: "direct",
+        InputProvenance: {
+          kind: "external_user",
+          senderUserId: "2786e238-0000-0000-0000-000000000000",
+        },
+      } as TemplateContext,
+      EMPTY_CFG,
+    );
+
+    const payload = parseInboundMetaPayload(prompt);
+    const user = payload["logic_os_user"] as Record<string, unknown>;
+    expect(user["userId"]).toBe("2786e238-0000-0000-0000-000000000000");
+    expect(user["name"]).toBeUndefined();
+    expect(user["role"]).toBeUndefined();
+  });
+
+  it("omits logic_os_user when provenance has no structured sender identity", () => {
+    const prompt = buildInboundMetaSystemPrompt(
+      {
+        Provider: "webchat",
+        Surface: "webchat",
+        ChatType: "direct",
+        InputProvenance: {
+          kind: "external_user",
+          sourceChannel: "logicos-dashboard",
+        },
+      } as TemplateContext,
+      EMPTY_CFG,
+    );
+
+    const payload = parseInboundMetaPayload(prompt);
+    expect(payload["logic_os_user"]).toBeUndefined();
+  });
+
+  it("omits logic_os_user when no provenance is attached", () => {
+    const prompt = buildInboundMetaSystemPrompt(
+      {
+        Provider: "webchat",
+        Surface: "webchat",
+        ChatType: "direct",
+      } as TemplateContext,
+      EMPTY_CFG,
+    );
+
+    const payload = parseInboundMetaPayload(prompt);
+    expect(payload["logic_os_user"]).toBeUndefined();
+  });
+
   it("keeps task-scoped chat ids out of the system prompt for cache stability", () => {
     const first = buildInboundMetaSystemPrompt(
       {

@@ -41,6 +41,13 @@ export const InputProvenanceSchema = closedObject({
   sourceSessionKey: Type.Optional(Type.String()),
   sourceChannel: Type.Optional(Type.String()),
   sourceTool: Type.Optional(Type.String()),
+  // Optional structured sender identity (e.g. LogicOS dashboard user). When
+  // present, the gateway renders the sender as trusted inbound metadata
+  // instead of prepending a provenance receipt string to the message body.
+  senderName: Type.Optional(Type.String()),
+  senderRole: Type.Optional(Type.String()),
+  senderUserId: Type.Optional(Type.String()),
+  senderSessionKey: Type.Optional(Type.String()),
 });
 
 /** Closed gateway client id schema aligned with `GATEWAY_CLIENT_IDS`. */

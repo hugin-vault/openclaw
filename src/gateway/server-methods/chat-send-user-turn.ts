@@ -107,9 +107,18 @@ function buildChatSendMessageContext(params: {
     !params.suppressCommandInterpretation && params.parsedMessage.trim().startsWith("/")
       ? "text"
       : undefined;
-  const messageForAgent = params.systemProvenanceReceipt
-    ? [params.systemProvenanceReceipt, params.parsedMessage].filter(Boolean).join("\n\n")
-    : params.parsedMessage;
+  // When the input provenance carries a structured sender identity
+  // (senderName/senderUserId), the inbound_meta system block already
+  // exposes the sender as trusted metadata — skip the receipt text prefix
+  // so the agent-visible message body stays clean. The receipt remains as
+  // the fallback for older clients that only send the string form.
+  const hasStructuredSenderIdentity = Boolean(
+    params.systemInputProvenance?.senderName || params.systemInputProvenance?.senderUserId,
+  );
+  const messageForAgent =
+    params.systemProvenanceReceipt && !hasStructuredSenderIdentity
+      ? [params.systemProvenanceReceipt, params.parsedMessage].filter(Boolean).join("\n\n")
+      : params.parsedMessage;
   const queuedFollowupOwnerDeviceId = normalizeOptionalChatText(params.client?.connect?.device?.id);
   const queuedFollowupOwnerConnId = normalizeOptionalChatText(params.client?.connId);
   const queuedFollowupOwnerKey = queuedFollowupOwnerDeviceId

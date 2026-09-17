@@ -15,6 +15,16 @@ export type InputProvenance = {
   sourceSessionKey?: string;
   sourceChannel?: string;
   sourceTool?: string;
+  /**
+   * Optional structured sender identity (e.g. LogicOS dashboard user).
+   * System-attached (admin-scope gated on chat.send), so treated as trusted
+   * metadata: rendered into the inbound_meta system block instead of as a
+   * provenance receipt text prefix on the message body.
+   */
+  senderName?: string;
+  senderRole?: string;
+  senderUserId?: string;
+  senderSessionKey?: string;
 };
 
 export const MAIN_SESSION_RESTART_RECOVERY_SOURCE_TOOL = "main_session_restart_recovery" as const;
@@ -47,6 +57,10 @@ export function normalizeInputProvenance(value: unknown): InputProvenance | unde
     sourceSessionKey: normalizeOptionalString(record.sourceSessionKey),
     sourceChannel: normalizeOptionalString(record.sourceChannel),
     sourceTool: normalizeOptionalString(record.sourceTool),
+    senderName: normalizeOptionalString(record.senderName),
+    senderRole: normalizeOptionalString(record.senderRole),
+    senderUserId: normalizeOptionalString(record.senderUserId),
+    senderSessionKey: normalizeOptionalString(record.senderSessionKey),
   };
 }
 

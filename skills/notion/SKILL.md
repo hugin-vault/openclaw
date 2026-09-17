@@ -71,6 +71,7 @@ ntn pages trash <page-id> --yes
 
 Notes:
 
+- ⚠️ **Hard gotcha (2026-08-05):** `ntn pages update <id> --content` REPLACES ALL blocks on the page — including child pages (they get deleted). For any addition to a page that has children, use the block-append API instead: `ntn api "v1/blocks/<id>/children" -X PATCH 'children[0][type]=...'`. Never use `pages update --content` on parent pages.
 - `pages get` prints Markdown with page properties as frontmatter.
 - Content input: `--content`, stdin, or editor in a TTY.
 - Parent refs: `page:<id>`, `database:<id>`, `data-source:<id>`.
